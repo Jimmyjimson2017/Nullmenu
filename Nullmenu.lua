@@ -1,8 +1,8 @@
 if CLIENT then
-    --[[ FULL NULLMENU v4.0 – Everything Working ]]--
-    local NULL_VERSION = "v4.0_Full"
+    local NULL_VERSION = "1.0"
     surface.PlaySound("buttons/button16.wav")
-    chat.AddText(Color(200,0,255), "[NullMenu] ", Color(0,255,200), NULL_VERSION, Color(255,255,255), " loaded. Type !null")
+    chat.AddText(Color(200,0,255), "[NullMenu] ", Color(0,255,200), NULL_VERSION, Color(255,255,255), "loaded. type nullmenu in console,")
+    chat.AddText(Color(200,0,0), "dont like it? then you can go suck my man hood")
 
     -- ========== ALL ORIGINAL CONVARS ==========
     CreateClientConVar("rz_espname", "1", true, false)
