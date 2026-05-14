@@ -1,10 +1,98 @@
 if CLIENT then
+    local function MainMenu()
+        local frame = vgui.Create("DFrame")
+        frame:SetSize(260, 420)
+        frame:Center()
+        frame:SetTitle("NullMenu 1.0")
+        frame:MakePopup()
+        frame.Paint = function(self,w,h)
+            draw.RoundedBox(2,0,0,w,h,Color(80,80,80,200))
+            draw.RoundedBox(2,0,1,w,22,Color(50,50,50,200))
+            surface.SetDrawColor(100,255,0,200)
+            surface.DrawOutlinedRect(0,0,w,h)
+        end
+        
+        local y = 40
+        local buttons = {
+            {"HEADTRACERS", "rz_headtracers"},
+            {"XRAY", "rz_xray"},
+            {"CHAMS", "rz_chams"},
+            {"EYETRACERS", "rz_eyetracers"},
+            {"ESP", "rz_esp"},
+            {"PLAYER TRACERS", "rz_tracers"},
+            {"TRACE PROPS", "rz_traceprop"},
+            {"HUD STATS", "rz_hud"},
+            {"CROSSHAIR", "rz_crosshair"},
+            {"REMOVE SKYBOX", "rz_skybox"},
+            {"PROP DISTANCE", "rz_propdist"},
+        }
+        
+        for _, btnInfo in ipairs(buttons) do
+            local btn = vgui.Create("DButton", frame)
+            btn:SetPos(20, y)
+            btn:SetSize(100, 20)
+            btn:SetText(btnInfo[1])
+            btn.DoClick = function()
+                local cur = GetConVarNumber(btnInfo[2])
+                RunConsoleCommand(btnInfo[2], cur == 1 and 0 or 1)
+            end
+            btn.Paint = function(self,w,h)
+                local state = GetConVarNumber(btnInfo[2])
+                if state == 1 then
+                    surface.SetDrawColor(60,60,60,255)
+                    surface.DrawRect(0,0,w,h)
+                    surface.SetDrawColor(20,255,20,200)
+                else
+                    surface.SetDrawColor(50,50,50,255)
+                    surface.DrawRect(0,0,w,h)
+                    surface.SetDrawColor(120,120,120,200)
+                end
+                surface.DrawOutlinedRect(0,0,w,h)
+            end
+            y = y + 25
+        end
+        
+        
+        local binderBtn = vgui.Create("DButton", frame)
+        binderBtn:SetPos(135, 40)
+        binderBtn:SetSize(100, 20)
+        binderBtn:SetText("PROP BINDER")
+        binderBtn:SetTextColor(Color(255,255,0))
+        binderBtn.DoClick = function() OpenPropBinder() end
+        binderBtn.Paint = function(self,w,h)
+            surface.SetDrawColor(80,0,80,255)
+            surface.DrawRect(0,0,w,h)
+            surface.SetDrawColor(255,0,255,200)
+            surface.DrawOutlinedRect(0,0,w,h)
+        end
+        
+        local fovSlide = vgui.Create("DNumSlider", frame)
+        fovSlide:SetPos(20, y+10)
+        fovSlide:SetSize(220, 20)
+        fovSlide:SetText("FOV")
+        fovSlide:SetConVar("rz_fov")
+        fovSlide:SetMinMax(20,150)
+        fovSlide:SetDecimals(0)
+        
+        local crossSlide = vgui.Create("DNumSlider", frame)
+        crossSlide:SetPos(20, y+40)
+        crossSlide:SetSize(220, 20)
+        crossSlide:SetText("Crosshair Size")
+        crossSlide:SetConVar("rz_crosshairsize")
+        crossSlide:SetMinMax(2,50)
+        crossSlide:SetDecimals(0)
+    end
+    
+    concommand.Add("nullmenu", MainMenu)
+    concommand.Add("rz_menu", MainMenu)
+    chat.AddCommand("null", MainMenu)   
+ 
     local NULL_VERSION = "1.0"
     surface.PlaySound("buttons/button16.wav")
-    chat.AddText(Color(200,0,255), "[NullMenu] ", Color(0,255,200), NULL_VERSION, Color(255,255,255), "loaded. type nullmenu in console,")
-    chat.AddText(Color(200,0,0), "dont like it? then you can go suck my man hood")
-
-    -- ========== ALL ORIGINAL CONVARS ==========
+    chat.AddText(Color(200,0,255), "[NullMenu] ", Color(0,255,200), NULL_VERSION, Color(255,255,255), " loaded. type nullmenu in console,")
+    
+    local SPECTATOR_TEAM = TEAM_SPECTATOR or 1002
+    local MOUSE_MIDDLE = 3
     CreateClientConVar("rz_espname", "1", true, false)
     CreateClientConVar("rz_esphp", "1", true, false)
     CreateClientConVar("rz_espping", "1", true, false)
@@ -29,12 +117,10 @@ if CLIENT then
     CreateClientConVar("rz_propdist", "1", true, false)
     CreateClientConVar("rz_xraydrawdist", "15000", true, false)
     CreateClientConVar("null_silent_aim_enabled", "1", true, false)
-
+    
     local ply = LocalPlayer()
     local physgun_classes = {["weapon_physgun"]=true, ["propkill_physgun"]=true, ["lua_physgun"]=true}
-
-    -- ========== WEAPON POS ==========
-    local function weaponpos()
+        local function weaponpos()
         if IsValid(ply:GetActiveWeapon()) and physgun_classes[ply:GetActiveWeapon():GetClass()] then
             local wep = ply:GetViewModel()
             if IsValid(wep) then
@@ -47,8 +133,7 @@ if CLIENT then
         end
         return ply:GetShootPos()
     end
-
-    -- ========== TRACERS ==========
+    
     hook.Add("HUDPaint", "Null_Tracers", function()
         if not (IsValid(ply:GetActiveWeapon()) and physgun_classes[ply:GetActiveWeapon():GetClass()]) then return end
         local tracers_on = GetConVarNumber("rz_tracers") == 1
@@ -58,7 +143,7 @@ if CLIENT then
         local held = wep.GetHeldEntity and wep:GetHeldEntity() or wep:GetInternalVariable("m_hGrabbedEntity")
         cam.Start3D()
         for _, v in ipairs(player.GetAll()) do
-            if v ~= ply and v:Alive() and v:Team() ~= TEAM_SPECTATOR and not v:IsDormant() then
+            if v ~= ply and v:Alive() and v:Team() ~= SPECTATOR_TEAM and not v:IsDormant() then
                 if proptracers_on and IsValid(held) then
                     render.DrawLine(held:LocalToWorld(held:OBBCenter()), v:LocalToWorld(v:OBBCenter()), Color(255,255,255), false)
                 end
@@ -70,8 +155,6 @@ if CLIENT then
         end
         cam.End3D()
     end)
-
-    -- ========== CHAMS ==========
     hook.Add("RenderScreenspaceEffects", "Null_Chams", function()
         if GetConVarNumber("rz_chams") ~= 1 then return end
         for _, v in ipairs(player.GetAll()) do
@@ -90,8 +173,6 @@ if CLIENT then
             end
         end
     end)
-
-    -- ========== XRAY ==========
     hook.Add("RenderScreenspaceEffects", "Null_XRay", function()
         if GetConVarNumber("rz_xray") ~= 1 then return end
         for _, ent in ipairs(ents.FindByClass("prop_physics")) do
@@ -106,24 +187,23 @@ if CLIENT then
             cam.End3D()
         end
     end)
-
-    -- ========== EYE TRACERS ==========
+    
     hook.Add("RenderScreenspaceEffects", "Null_EyeTracers", function()
         if GetConVarNumber("rz_eyetracers") ~= 1 then return end
         for _, v in ipairs(player.GetAll()) do
-            if v:Alive() and v ~= ply and v:Team() ~= TEAM_SPECTATOR and not v:IsDormant() then
+            if v:Alive() and v ~= ply and v:Team() ~= SPECTATOR_TEAM and not v:IsDormant() then
                 cam.Start3D()
                 render.DrawLine(v:GetEyeTrace().HitPos, v:EyePos(), Color(100,200,100))
                 cam.End3D()
             end
         end
     end)
-
+    
     -- ========== HEAD TRACERS ==========
     hook.Add("RenderScreenspaceEffects", "Null_HeadTracers", function()
         if GetConVarNumber("rz_headtracers") ~= 1 then return end
         for _, v in ipairs(player.GetAll()) do
-            if v ~= ply and v:Alive() and v:Team() ~= TEAM_SPECTATOR and not v:IsDormant() then
+            if v ~= ply and v:Alive() and v:Team() ~= SPECTATOR_TEAM and not v:IsDormant() then
                 local trace = util.QuickTrace(v:EyePos(), Vector(0,0,-100000), v)
                 local vel = v:GetVelocity():Length()
                 cam.Start3D()
@@ -144,7 +224,7 @@ if CLIENT then
             end
         end
     end)
-
+    
     -- ========== FOV ==========
     hook.Add("CalcView", "Null_FOV", function(pl, origin, ang, fov, zn, zf)
         local newFOV = GetConVarNumber("rz_fov")
@@ -152,12 +232,12 @@ if CLIENT then
             return {origin=origin, angles=ang, fov=newFOV, znear=zn, zfar=zf}
         end
     end)
-
+    
     -- ========== ESP ==========
     hook.Add("HUDPaint", "Null_ESP", function()
         if GetConVarNumber("rz_esp") ~= 1 then return end
         for _, v in ipairs(player.GetAll()) do
-            if v == ply or not v:Alive() or v:Team() == TEAM_SPECTATOR or v:IsDormant() then continue end
+            if v == ply or not v:Alive() or v:Team() == SPECTATOR_TEAM or v:IsDormant() then continue end
             local screen = v:EyePos():ToScreen()
             if not screen.visible then continue end
             local dist = math.floor(ply:GetPos():Distance(v:GetPos()))
@@ -183,7 +263,7 @@ if CLIENT then
             end
         end
     end)
-
+    
     -- ========== CROSSHAIR ==========
     hook.Add("HUDPaint", "Null_Crosshair", function()
         if GetConVarNumber("rz_crosshair") ~= 1 then return end
@@ -194,7 +274,7 @@ if CLIENT then
         surface.DrawLine(m.x-size, m.y, m.x+size, m.y)
         surface.DrawLine(m.x, m.y+size, m.x, m.y-size)
     end)
-
+    
     -- ========== HUD ==========
     hook.Add("HUDPaint", "Null_HUD", function()
         if GetConVarNumber("rz_hud") ~= 1 then return end
@@ -202,7 +282,7 @@ if CLIENT then
         draw.SimpleText("LATENCY : "..ply:Ping(), "Default", 10, 20, Color(255,255,255))
         draw.SimpleText("FPS : "..math.Round(1/FrameTime()), "Default", 10, 30, Color(255,255,255))
     end)
-
+    
     -- ========== SKYBOX ==========
     hook.Add("PreDrawSkyBox", "Null_Skybox", function()
         if GetConVarNumber("rz_skybox") == 1 then
@@ -210,7 +290,7 @@ if CLIENT then
             return true
         end
     end)
-
+    
     -- ========== PROP DISTANCE ==========
     hook.Add("HUDPaint", "Null_PropDist", function()
         if GetConVarNumber("rz_propdist") ~= 1 then return end
@@ -223,7 +303,7 @@ if CLIENT then
             draw.SimpleTextOutlined(dist.."m", "Default", scr.x, scr.y, Color(255,100,0), 1, 1, 1, Color(0,0,0))
         end
     end)
-
+    
     -- ========== TRACE PROP ==========
     hook.Add("HUDPaint", "Null_TraceProp", function()
         if GetConVarNumber("rz_traceprop") ~= 1 then return end
@@ -239,12 +319,12 @@ if CLIENT then
             end
         end
     end)
-
-    -- ========== SILENT AIM (MOUSE3 HOLD) ==========
+    
+    -- ========== SILENT AIM ==========
     local function GetNearest()
         local closest, closestDist = nil, 999999
         for _, v in ipairs(player.GetAll()) do
-            if v ~= ply and v:Alive() and v:Team() ~= TEAM_SPECTATOR and not v:IsDormant() then
+            if v ~= ply and v:Alive() and v:Team() ~= SPECTATOR_TEAM and not v:IsDormant() then
                 local d = ply:GetPos():Distance(v:GetPos())
                 if d < closestDist then closest, closestDist = v, d end
             end
@@ -259,7 +339,7 @@ if CLIENT then
             end
         end
     end)
-
+    
     -- ========== ROTATE COMMANDS ==========
     concommand.Add("null_rotate", function()
         ply:SetEyeAngles(Angle(ply:EyeAngles().p, ply:EyeAngles().y - 180, 0))
@@ -271,8 +351,8 @@ if CLIENT then
         timer.Simple(0.1, function() RunConsoleCommand("-jump") end)
         chat.AddText(Color(0,255,0), "[NullMenu] 180° spin + jump")
     end)
-
-    -- ========== PROP BINDER (FIXED) ==========
+    
+    -- ========== PROP BINDER ==========
     local propCategories = {
         Attack = {
             {"Tide Gate", "models/props/de_tides/gate_large.mdl"},
@@ -292,13 +372,13 @@ if CLIENT then
             {"Barrel Lid Clear", "models/props/de_inferno/flower_barrel_p10.mdl"}
         }
     }
-
+    
     local function BindKeyToProp(keyName, propModel)
         RunConsoleCommand("bind", keyName, "gm_spawn " .. propModel)
         chat.AddText(Color(0,255,0), "[BINDER] Bound '", Color(255,255,0), keyName, Color(0,255,0), "' to: gm_spawn " .. propModel)
         surface.PlaySound("buttons/button15.wav")
     end
-
+    
     local function WaitForKey(propName, propModel)
         local frame = vgui.Create("DFrame")
         frame:SetSize(400, 120)
@@ -330,8 +410,8 @@ if CLIENT then
         hook.Add("OnKeyCodePressed", hookName, listener)
         frame.OnClose = function() hook.Remove("OnKeyCodePressed", hookName) end
     end
-
-    local function OpenPropBinder()
+    
+    function OpenPropBinder()
         local frame = vgui.Create("DFrame")
         frame:SetSize(550, 650)
         frame:Center()
@@ -372,93 +452,9 @@ if CLIENT then
             tabs:AddSheet(catName, panel, "icon16/brick.png")
         end
     end
-
+    
     concommand.Add("null_binder", OpenPropBinder)
     chat.AddCommand("bindprop", OpenPropBinder)
-
-    -- ========== MAIN MENU ==========
-    local function MainMenu()
-        local frame = vgui.Create("DFrame")
-        frame:SetSize(260, 400)
-        frame:Center()
-        frame:SetTitle("NullMenu " .. NULL_VERSION)
-        frame:MakePopup()
-        frame.Paint = function(self,w,h)
-            draw.RoundedBox(2,0,0,w,h,Color(80,80,80,200))
-            draw.RoundedBox(2,0,1,w,22,Color(50,50,50,200))
-            surface.SetDrawColor(100,255,0,200)
-            surface.DrawOutlinedRect(0,0,w,h)
-        end
-        local function addBtn(x,y,text,convar)
-            local btn = vgui.Create("DButton", frame)
-            btn:SetPos(x,y)
-            btn:SetSize(100,20)
-            btn:SetText(text)
-            btn.DoClick = function()
-                local cur = GetConVarNumber(convar)
-                RunConsoleCommand(convar, cur==1 and 0 or 1)
-            end
-            btn.Paint = function(self,w,h)
-                local state = GetConVarNumber(convar)
-                if state==1 then
-                    surface.SetDrawColor(60,60,60,255)
-                    surface.DrawRect(0,0,w,h)
-                    surface.SetDrawColor(20,255,20,200)
-                    surface.DrawOutlinedRect(0,0,w,h)
-                else
-                    surface.SetDrawColor(50,50,50,255)
-                    surface.DrawRect(0,0,w,h)
-                    surface.SetDrawColor(120,120,120,200)
-                    surface.DrawOutlinedRect(0,0,w,h)
-                end
-            end
-            return btn
-        end
-        addBtn(20,40,"HEADTRACERS","rz_headtracers")
-        addBtn(135,40,"XRAY","rz_xray")
-        addBtn(135,70,"CHAMS","rz_chams")
-        addBtn(20,70,"EYETRACERS","rz_eyetracers")
-        addBtn(20,100,"ESP","rz_esp")
-        addBtn(135,100,"PLAYER TRACERS","rz_tracers")
-        addBtn(20,130,"TRACE PROPS","rz_traceprop")
-        addBtn(135,130,"HUD STATS","rz_hud")
-        addBtn(135,160,"CROSSHAIR","rz_crosshair")
-        addBtn(20,160,"REMOVE SKYBOX","rz_skybox")
-        addBtn(20,190,"PROP DISTANCE","rz_propdist")
-        
-        local binderBtn = vgui.Create("DButton", frame)
-        binderBtn:SetPos(135,190)
-        binderBtn:SetSize(100,20)
-        binderBtn:SetText("PROP BINDER")
-        binderBtn:SetTextColor(Color(255,255,0))
-        binderBtn.Paint = function(self,w,h)
-            surface.SetDrawColor(80,0,80,255)
-            surface.DrawRect(0,0,w,h)
-            surface.SetDrawColor(255,0,255,200)
-            surface.DrawOutlinedRect(0,0,w,h)
-        end
-        binderBtn.DoClick = function() OpenPropBinder() end
-        
-        local fovSlide = vgui.Create("DNumSlider", frame)
-        fovSlide:SetPos(30,241)
-        fovSlide:SetSize(220,20)
-        fovSlide:SetText("FOV")
-        fovSlide:SetConVar("rz_fov")
-        fovSlide:SetMinMax(20,150)
-        fovSlide:SetDecimals(0)
-        
-        local crossSize = vgui.Create("DNumSlider", frame)
-        crossSize:SetPos(30,265)
-        crossSize:SetSize(220,20)
-        crossSize:SetText("Crosshair Size")
-        crossSize:SetConVar("rz_crosshairsize")
-        crossSize:SetMinMax(2,50)
-        crossSize:SetDecimals(0)
-    end
     
-    concommand.Add("nullmenu", MainMenu)
-    concommand.Add("rz_menu", MainMenu)
-    chat.AddCommand("null", MainMenu)
-    
-    chat.AddText(Color(0,255,0), "[NullMenu] FULLY LOADED - ESP, FOV, Silent Aim (MOUSE3), Prop Binder (!bindprop)")
+    chat.AddText(Color(0,255,0), "[NullMenu] FULLY LOADED - Type nullmenu")
 end
