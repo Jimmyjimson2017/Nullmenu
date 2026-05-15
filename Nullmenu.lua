@@ -341,17 +341,16 @@ if CLIENT then
     end)
     
     -- ========== ROTATE COMMANDS ==========
-    concommand.Add("null_rotate", function()
-        ply:SetEyeAngles(Angle(ply:EyeAngles().p, ply:EyeAngles().y - 180, 0))
-        chat.AddText(Color(0,255,0), "[NullMenu] 180° spin")
-    end)
-    concommand.Add("null_rotate2", function()
-        RunConsoleCommand("+jump")
-        ply:SetEyeAngles(Angle(-ply:EyeAngles().p, ply:EyeAngles().y - 180, 0))
-        timer.Simple(0.1, function() RunConsoleCommand("-jump") end)
-        chat.AddText(Color(0,255,0), "[NullMenu] 180° spin + jump")
-    end)
-    
+    local function Rotate180()
+        LocalPlayer():SetEyeAngles( Angle( LocalPlayer():EyeAngles().p, LocalPlayer():EyeAngles().y - 180, LocalPlayer():EyeAngles().r ) )
+end
+CCA( "null_rotate", Rotate180 )
+local function Rotate180Up()
+        LocalPlayer():SetEyeAngles( Angle( -LocalPlayer():EyeAngles().p, LocalPlayer():EyeAngles().y - 180, LocalPlayer():EyeAngles().r ) )
+        RCC( "+jump" )
+        timer.Simple( 0.1, function() RCC( "-jump" ) end )
+end
+CCA( "null_rotate2", Rotate180Up )
     -- ========== PROP BINDER ==========
     local propCategories = {
         Attack = {
@@ -455,6 +454,3 @@ if CLIENT then
     
     concommand.Add("null_binder", OpenPropBinder)
     chat.AddCommand("bindprop", OpenPropBinder)
-    
-    chat.AddText(Color(0,255,0), "[NullMenu] FULLY LOADED - Type nullmenu")
-end
