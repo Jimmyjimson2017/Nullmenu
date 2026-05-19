@@ -84,8 +84,7 @@ if CLIENT then
     end
     
     concommand.Add("nullmenu", MainMenu)
-    concommand.Add("rz_menu", MainMenu)
-    chat.AddCommand("null", MainMenu)   
+    concommand.Add("rz_menu", MainMenu)   
  
     local NULL_VERSION = "1.0"
     surface.PlaySound("buttons/button16.wav")
@@ -143,7 +142,7 @@ if CLIENT then
         local held = wep.GetHeldEntity and wep:GetHeldEntity() or wep:GetInternalVariable("m_hGrabbedEntity")
         cam.Start3D()
         for _, v in ipairs(player.GetAll()) do
-            if v ~= ply and v:Alive() and v:Team() ~= SPECTATOR_TEAM and not v:IsDormant() then
+            if v ~= LocalPlayer() and v:Alive() and v:Team() ~= SPECTATOR_TEAM and not v:IsDormant() then
                 if proptracers_on and IsValid(held) then
                     render.DrawLine(held:LocalToWorld(held:OBBCenter()), v:LocalToWorld(v:OBBCenter()), Color(255,255,255), false)
                 end
@@ -199,7 +198,6 @@ if CLIENT then
         end
     end)
     
-    -- ========== HEAD TRACERS ==========
     hook.Add("RenderScreenspaceEffects", "Null_HeadTracers", function()
         if GetConVarNumber("rz_headtracers") ~= 1 then return end
         for _, v in ipairs(player.GetAll()) do
@@ -225,7 +223,6 @@ if CLIENT then
         end
     end)
     
-    -- ========== FOV ==========
     hook.Add("CalcView", "Null_FOV", function(pl, origin, ang, fov, zn, zf)
         local newFOV = GetConVarNumber("rz_fov")
         if newFOV >= 20 and newFOV <= 150 then
@@ -233,7 +230,6 @@ if CLIENT then
         end
     end)
     
-    -- ========== ESP ==========
     hook.Add("HUDPaint", "Null_ESP", function()
         if GetConVarNumber("rz_esp") ~= 1 then return end
         for _, v in ipairs(player.GetAll()) do
@@ -264,7 +260,6 @@ if CLIENT then
         end
     end)
     
-    -- ========== CROSSHAIR ==========
     hook.Add("HUDPaint", "Null_Crosshair", function()
         if GetConVarNumber("rz_crosshair") ~= 1 then return end
         local m = ply:GetEyeTraceNoCursor().HitPos:ToScreen()
@@ -275,7 +270,6 @@ if CLIENT then
         surface.DrawLine(m.x, m.y+size, m.x, m.y-size)
     end)
     
-    -- ========== HUD ==========
     hook.Add("HUDPaint", "Null_HUD", function()
         if GetConVarNumber("rz_hud") ~= 1 then return end
         draw.SimpleText("VELOCITY : "..math.floor(ply:GetVelocity():Length()), "Default", 10, 10, Color(255,255,255))
@@ -283,7 +277,6 @@ if CLIENT then
         draw.SimpleText("FPS : "..math.Round(1/FrameTime()), "Default", 10, 30, Color(255,255,255))
     end)
     
-    -- ========== SKYBOX ==========
     hook.Add("PreDrawSkyBox", "Null_Skybox", function()
         if GetConVarNumber("rz_skybox") == 1 then
             render.Clear(GetConVarNumber("rz_skyboxr"), GetConVarNumber("rz_skyboxg"), GetConVarNumber("rz_skyboxb"), 255)
@@ -291,7 +284,6 @@ if CLIENT then
         end
     end)
     
-    -- ========== PROP DISTANCE ==========
     hook.Add("HUDPaint", "Null_PropDist", function()
         if GetConVarNumber("rz_propdist") ~= 1 then return end
         local wep = ply:GetActiveWeapon()
@@ -304,7 +296,6 @@ if CLIENT then
         end
     end)
     
-    -- ========== TRACE PROP ==========
     hook.Add("HUDPaint", "Null_TraceProp", function()
         if GetConVarNumber("rz_traceprop") ~= 1 then return end
         local wep = ply:GetActiveWeapon()
@@ -320,7 +311,6 @@ if CLIENT then
         end
     end)
     
-    -- ========== SILENT AIM ==========
     local function GetNearest()
         local closest, closestDist = nil, 999999
         for _, v in ipairs(player.GetAll()) do
@@ -340,18 +330,16 @@ if CLIENT then
         end
     end)
     
-    -- ========== ROTATE COMMANDS ==========
     local function Rotate180()
         LocalPlayer():SetEyeAngles( Angle( LocalPlayer():EyeAngles().p, LocalPlayer():EyeAngles().y - 180, LocalPlayer():EyeAngles().r ) )
 end
-CCA( "null_rotate", Rotate180 )
+concommand.Add("null_rotate", Rotate180)
 local function Rotate180Up()
         LocalPlayer():SetEyeAngles( Angle( -LocalPlayer():EyeAngles().p, LocalPlayer():EyeAngles().y - 180, LocalPlayer():EyeAngles().r ) )
-        RCC( "+jump" )
-        timer.Simple( 0.1, function() RCC( "-jump" ) end )
+        RunConsoleCommand("+jump")
+timer.Simple(0.1, function() RunConsoleCommand("-jump") end)
 end
-CCA( "null_rotate2", Rotate180Up )
-    -- ========== PROP BINDER ==========
+concommand.Add("null_rotate2", Rotate180Up)
     local propCategories = {
         Attack = {
             {"Tide Gate", "models/props/de_tides/gate_large.mdl"},
@@ -372,43 +360,40 @@ CCA( "null_rotate2", Rotate180Up )
         }
     }
     
-    local function BindKeyToProp(keyName, propModel)
-        RunConsoleCommand("bind", keyName, "gm_spawn " .. propModel)
-        chat.AddText(Color(0,255,0), "[BINDER] Bound '", Color(255,255,0), keyName, Color(0,255,0), "' to: gm_spawn " .. propModel)
-        surface.PlaySound("buttons/button15.wav")
-    end
+local function BindKeyToProp(keyName, propModel)
+    local bindCmd = "bind " .. keyName .. " \"gm_spawn " .. propModel .. "\""
+    chat.AddText(Color(0,255,0), "[BINDER] Run this in console:")
+    chat.AddText(Color(255,255,0), bindCmd)
+    surface.PlaySound("buttons/button15.wav")
+end
     
-    local function WaitForKey(propName, propModel)
-        local frame = vgui.Create("DFrame")
-        frame:SetSize(400, 120)
-        frame:Center()
-        frame:SetTitle("Bind: " .. propName)
-        frame:MakePopup()
-        frame.Paint = function(self, w, h)
-            draw.RoundedBox(8,0,0,w,h,Color(30,30,40,230))
-            draw.RoundedBox(8,0,0,w,25,Color(100,0,150,255))
-            surface.SetDrawColor(200,0,255,255)
-            surface.DrawOutlinedRect(0,0,w,h)
-            draw.SimpleText("Press ANY key (ESC to cancel)", "Trebuchet20", w/2, 50, Color(255,255,0), 1, 1)
-        end
-        local hookName = "Null_Bind_" .. propName
-        local listener = function(key)
-            if key == KEY_ESCAPE then
-                frame:Close()
-                chat.AddText(Color(255,100,100), "[BINDER] Cancelled")
-                hook.Remove("OnKeyCodePressed", hookName)
-                return
-            end
-            local keyName = input.GetKeyName(key)
-            if keyName and keyName ~= "" then
-                BindKeyToProp(string.lower(keyName), propModel)
-                frame:Close()
-            end
-            hook.Remove("OnKeyCodePressed", hookName)
-        end
-        hook.Add("OnKeyCodePressed", hookName, listener)
-        frame.OnClose = function() hook.Remove("OnKeyCodePressed", hookName) end
+  local function WaitForKey(propName, propModel)
+    local frame = vgui.Create("DFrame")
+    frame:SetSize(400, 120)
+    frame:Center()
+    frame:SetTitle("Bind: " .. propName)
+    frame:MakePopup()
+    frame:SetKeyboardInputEnabled(true)
+    frame.Paint = function(self, w, h)
+        draw.RoundedBox(8,0,0,w,h,Color(30,30,40,230))
+        draw.RoundedBox(8,0,0,w,25,Color(100,0,150,255))
+        surface.SetDrawColor(200,0,255,255)
+        surface.DrawOutlinedRect(0,0,w,h)
+        draw.SimpleText("Press ANY key (ESC to cancel)", "Trebuchet20", w/2, 50, Color(255,255,0), 1, 1)
     end
+    frame.OnKeyCodePressed = function(self, key)
+        if key == KEY_ESCAPE then
+            frame:Close()
+            chat.AddText(Color(255,100,100), "[BINDER] Cancelled")
+            return
+        end
+        local keyName = input.GetKeyName(key)
+        if keyName and keyName ~= "" then
+            BindKeyToProp(string.lower(keyName), propModel)
+            frame:Close()
+        end
+    end
+end
     
     function OpenPropBinder()
         local frame = vgui.Create("DFrame")
@@ -453,4 +438,4 @@ CCA( "null_rotate2", Rotate180Up )
     end
     
     concommand.Add("null_binder", OpenPropBinder)
-    chat.AddCommand("bindprop", OpenPropBinder)
+end
