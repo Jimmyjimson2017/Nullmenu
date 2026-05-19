@@ -11,7 +11,7 @@ a̶d̶d̶ ̶a̶ ̶p̶r̶o̶p̶ ̶b̶i̶n̶d̶ ̶m̶e̶n̶u̶ ̶f̶o̶r̶ ̶c̶o�
 make a better GUI
 more customizability
 
-#2.0 Updates
+# 2.0 Updates
 removed aimbot
 FIXED EVERYTHING
 SHOULD ALL BE IN ORDER NOW
