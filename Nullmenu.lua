@@ -3,7 +3,7 @@ if CLIENT then
         local frame = vgui.Create("DFrame")
         frame:SetSize(260, 420)
         frame:Center()
-        frame:SetTitle("NullMenu 1.0")
+        frame:SetTitle("NullMenu 2.0")
         frame:MakePopup()
         frame.Paint = function(self,w,h)
             draw.RoundedBox(2,0,0,w,h,Color(80,80,80,200))
@@ -86,9 +86,9 @@ if CLIENT then
     concommand.Add("nullmenu", MainMenu)
     concommand.Add("rz_menu", MainMenu)   
  
-    local NULL_VERSION = "1.0"
+    local NULL_VERSION = ".0"
     surface.PlaySound("buttons/button16.wav")
-    chat.AddText(Color(200,0,255), "[NullMenu] ", Color(0,255,200), NULL_VERSION, Color(255,255,255), " loaded. type nullmenu in console,")
+    chat.AddText(Color(200,0,255), "[NullMenu] ", Color(0,255,200), NULL_VERSION, Color(255,255,255), "Happy 2.0 release! type nullmenu in console")
     
     local SPECTATOR_TEAM = TEAM_SPECTATOR or 1002
     local MOUSE_MIDDLE = 3
